@@ -25,6 +25,7 @@ public final class ConfigurationManager {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurationManager.class);
     private static final CompositeConfiguration config = new CompositeConfiguration();
     private static XMLConfiguration overrideConfig;
+    private static Class<?> configLoaderClass = ConfigurationManager.class;
 
     private ConfigurationManager() {
     }
@@ -43,6 +44,7 @@ public final class ConfigurationManager {
             overrideConfig = new XMLConfiguration(configFile);
             config.addConfiguration(overrideConfig, true);
             addMasterConfig(); // Defaults must be added last
+            overrideConfig.setProperty(ConfigurationManagerConstants.CONFIG_DIR_PROPERTY, configFile.getAbsolutePath());
             LOG.info("Configuration [{}] successfully loaded.", configFile.getAbsolutePath());
         } catch (ConfigurationException cex) {
             LOG.error("Exception reading configuration.", cex);
@@ -68,7 +70,10 @@ public final class ConfigurationManager {
     private static void addMasterConfig() {
         InputStream inputStream = null;
         try {
-            inputStream = ConfigurationManager.class.getResourceAsStream(ConfigurationManagerConstants.MASTER_CONFIG_FILENAME);
+            inputStream = configLoaderClass.getResourceAsStream(ConfigurationManagerConstants.MASTER_CONFIG_FILENAME);
+            if (inputStream == null) {
+                inputStream = ConfigurationManager.class.getResourceAsStream(ConfigurationManagerConstants.MASTER_CONFIG_FILENAME);
+            }
             final XMLConfiguration masterXmlConfig = new XMLConfiguration();
             masterXmlConfig.load(inputStream);
             config.addConfiguration(masterXmlConfig);
@@ -92,7 +97,10 @@ public final class ConfigurationManager {
             InputStream inputStream = null;
             try {
                 configFile.createNewFile();
-                inputStream = ConfigurationManager.class.getResourceAsStream(ConfigurationManagerConstants.CONFIG_FILENAME);
+                inputStream = configLoaderClass.getResourceAsStream(ConfigurationManagerConstants.CONFIG_FILENAME);
+                if (inputStream == null) {
+                    inputStream = ConfigurationManager.class.getResourceAsStream(ConfigurationManagerConstants.CONFIG_FILENAME);
+                }
                 FileUtils.copyInputStreamToFile(inputStream, configFile);
             } catch (IOException e) {
                 LOG.error("Exception extracting default configuration.", e);
@@ -122,6 +130,15 @@ public final class ConfigurationManager {
             configDirectory.mkdirs();
         }
         return configDirectory;
+    }
+
+    /**
+     * Set the class used to obtain the master default and empty configuration XML files.
+     * 
+     * @param configLoaderClass
+     */
+    public static void setConfigLoader(Class<?> configLoaderClass) {
+        ConfigurationManager.configLoaderClass = configLoaderClass;
     }
 
     /**

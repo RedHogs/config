@@ -12,5 +12,6 @@ public interface ConfigurationManagerConstants {
     String MASTER_CONFIG_FILENAME = "master-config.xml";
     String CONFIG_FILENAME = "config.xml";
     String CONFIG_PROPERTY = "config";
+    String CONFIG_DIR_PROPERTY = "config.directory";
 
 }
